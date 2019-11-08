@@ -44,9 +44,12 @@ impl Color {
 
 impl std::ops::Add for Color {
     type Output = Color;
-    fn add(mut self, other: Self) -> Self {
-        self.add(other);
-        self
+    fn add(self, other: Self) -> Self {
+        Color {
+            r: self.r + other.r,
+            g: self.g + other.g,
+            b: self.b + other.b
+        }
     }
 }
 

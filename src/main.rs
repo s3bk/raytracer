@@ -88,22 +88,33 @@ fn main() {
 fn calculate_color(scene: &Scene, mut ray: Ray, max_bounces: usize) -> Color {
     let mut exclude = None;
     let mut color = scene.background_color;
+    let mut scale = Color::white();
+
     for i in 0..max_bounces {
         let hit = scene.calculate_hit(&ray, &exclude);
         if let Some(hit) = hit {
             exclude = Some(hit.object);
 
+            let mut this_color = Color::black();
             let object_color = hit.object.color();
             for &(direction, lamp_color) in &scene.directional_lights {
                 let shade = direction.dot(hit.normal);
                 if shade > 0.0 {
-                    color.add(object_color * lamp_color, shade);
+                    this_color.add(object_color * lamp_color * scale, shade);
                 }
             }
 
             for &ambient in &scene.ambient_lights {
-                color.add(object_color * ambient, 1.0);
+                this_color.add(object_color * ambient * scale, 1.0);
             }
+
+            let pass_through = 0.2 + 0.8 * ray.direction.dot(hit.normal).powi(2);
+            let refraction = 1.0 - pass_through;
+
+            color = color + this_color * pass_through;
+
+            // adjust refraction factor
+            scale = scale * refraction;
 
             ray = Ray {
                 start: hit.position,
