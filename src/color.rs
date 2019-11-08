@@ -26,22 +26,24 @@ impl Color {
         Self::new(1.0, 1.0, 1.0)
     }
 
-    fn change_torwards(&mut self, target: Color, amount: f32) {
+    pub fn change_towards(&mut self, target: Color, amount: f32) {
+        debug_assert!(amount >= 0.0 && amount <= 1.0);
         let diff_r = target.r - self.r;
-        self.r += (diff_r * amount).min(0.0).max(1.0);
         let diff_g = target.g - self.g;
-        self.g += (diff_g * amount).min(0.0).max(1.0);
         let diff_b = target.b - self.b;
-        self.b += (diff_b * amount).min(0.0).max(1.0);
+
+        self.r += diff_r * amount;
+        self.g += diff_g * amount;
+        self.b += diff_b * amount;
     }
 
     pub fn add_ambient(&mut self, ambient: Color) {
-        self.change_torwards(ambient, 0.01);
+        self.change_towards(ambient, 0.1);
     }
 
     pub fn add_directional(&mut self, color: Color, strength: f32) {
         debug_assert!(strength >= 0.0 && strength <= 1.0);
-        self.change_torwards(color, strength);
+        self.change_towards(color, strength);
     }
 }
 
