@@ -14,6 +14,7 @@ pub use crate::scene::{Object, Scene, Sphere};
 use rayon::prelude::*;
 
 fn main() {
+    let start = time::precise_time_s();
     let mut scene = Scene::new(Color::black());
     scene.ambient_lights.push(Color::new(0.1, 0.1, 0.1));
     scene
@@ -21,19 +22,19 @@ fn main() {
         .push((Vector3::new(0.0, 0.0, 1.0), Color::white()));
 
     scene.add(Sphere {
-        center: Vector3::new(11.0, 2.0, 0.0),
+        center: Vector3::new(11.0, 3.0, 0.0),
         size: 3.0,
         color: Color::red(),
     });
 
     scene.add(Sphere {
-        center: Vector3::new(9.0, -2.0, -2.0),
+        center: Vector3::new(9.0, -2.5, -2.5),
         size: 3.0,
         color: Color::green(),
     });
 
     scene.add(Sphere {
-        center: Vector3::new(10.0, 0.0, 3.0),
+        center: Vector3::new(10.0, -1.5, 3.5),
         size: 3.0,
         color: Color::blue(),
     });
@@ -56,6 +57,8 @@ fn main() {
             (x, y, color)
         })
         .collect::<Vec<_>>();
+    println!("Generated in {:.3} seconds", time::precise_time_s() - start);
+    let start = time::precise_time_s();
 
     let mut img = image::ImageBuffer::new(IMAGE_WIDTH, IMAGE_HEIGHT);
     for (x, y, color) in pixels {
@@ -71,6 +74,7 @@ fn main() {
         )
     }
     img.save("out.png").expect("Could not save image");
+    println!("Exported in {:.3} seconds", time::precise_time_s() - start);
 }
 
 fn calculate_color(scene: &Scene, mut ray: Ray, max_bounces: usize) -> Color {

@@ -27,7 +27,7 @@ impl Color {
     }
 
     pub fn change_towards(&mut self, target: Color, amount: f32) {
-        debug_assert!(amount >= 0.0 && amount <= 1.0);
+        debug_assert!(amount >= 0.0 && amount <= 1.0, "Amount is {:?}", amount);
         let diff_r = target.r - self.r;
         let diff_g = target.g - self.g;
         let diff_b = target.b - self.b;

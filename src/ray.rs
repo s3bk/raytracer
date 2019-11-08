@@ -16,7 +16,6 @@ pub struct Hit<'a> {
 
 impl Hit<'_> {
     pub fn out_angle(&self, in_angle: Vector3) -> Vector3 {
-        let c = -(self.normal.dot(in_angle));
-        -(in_angle + (2.0 * self.normal * c))
+        in_angle - (2.0 * in_angle.dot(self.normal) * self.normal)
     }
 }
