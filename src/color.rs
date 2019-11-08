@@ -26,35 +26,27 @@ impl Color {
         Self::new(1.0, 1.0, 1.0)
     }
 
-    pub fn change_towards(&mut self, target: Color, amount: f32) {
-        debug_assert!(amount >= 0.0 && amount <= 1.0, "Amount is {:?}", amount);
-        let diff_r = target.r - self.r;
-        let diff_g = target.g - self.g;
-        let diff_b = target.b - self.b;
-
-        self.r += diff_r * amount;
-        self.g += diff_g * amount;
-        self.b += diff_b * amount;
+    pub fn add(&mut self, target: Color, amount: f32) {
+        self.r += target.r * amount;
+        self.g += target.g * amount;
+        self.b += target.b * amount;
     }
 
     pub fn add_ambient(&mut self, ambient: Color) {
-        self.change_towards(ambient, 0.1);
+        self.add(ambient, 1.0);
     }
 
     pub fn add_directional(&mut self, color: Color, strength: f32) {
         debug_assert!(strength >= 0.0 && strength <= 1.0);
-        self.change_towards(color, strength);
+        self.add(color, strength);
     }
 }
 
 impl std::ops::Add for Color {
     type Output = Color;
-    fn add(self, other: Self) -> Self {
-        Self {
-            r: self.r.max(other.r),
-            g: self.g.max(other.g),
-            b: self.b.max(other.b),
-        }
+    fn add(mut self, other: Self) -> Self {
+        self.add(other);
+        self
     }
 }
 
@@ -65,6 +57,16 @@ impl std::ops::Mul for Color {
             r: self.r * other.r,
             g: self.g * other.g,
             b: self.b * other.b,
+        }
+    }
+}
+impl std::ops::Mul<f32> for Color {
+    type Output = Color;
+    fn mul(self, other: f32) -> Self {
+        Self {
+            r: self.r * other,
+            g: self.g * other,
+            b: self.b * other,
         }
     }
 }

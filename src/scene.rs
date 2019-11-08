@@ -77,9 +77,15 @@ pub struct Sphere {
 
 impl Object for Sphere {
     fn intersect<'a>(&'a self, ray: &Ray) -> Option<Hit<'a>> {
-        let distance_to_center = self.center - ray.start;
-        let v = distance_to_center.dot(ray.direction);
-        let disc = self.size.powf(2.0) - (distance_to_center.dot(distance_to_center) - v.powf(2.0));
+        let ray_to_center = self.center - ray.start;
+        let distance_squared = ray_to_center.dot(ray_to_center);
+        let size_squared = self.size.powi(2);
+
+        let v = ray_to_center.dot(ray.direction);
+        if v < 0.0 {
+            return None;
+        }
+        let disc = size_squared - (distance_squared - v.powi(2));
 
         if disc < 0.0 {
             return None;
@@ -87,7 +93,7 @@ impl Object for Sphere {
 
         let d = disc.sqrt();
         let intersect_at = ray.start + (v - d) * ray.direction;
-        let normal = (self.center - intersect_at).normalize();
+        let normal = (intersect_at - self.center).normalize();
 
         Some(Hit {
             position: intersect_at,

@@ -10,6 +10,7 @@ pub use crate::color::Color;
 pub use crate::math::Vector3;
 pub use crate::ray::{Hit, Ray};
 pub use crate::scene::{Object, Scene, Sphere};
+use palette::Srgb;
 
 use rayon::prelude::*;
 
@@ -19,7 +20,7 @@ fn main() {
     scene.ambient_lights.push(Color::new(0.1, 0.1, 0.1));
     scene
         .directional_lights
-        .push((Vector3::new(0.0, 0.0, 1.0), Color::white()));
+        .push((Vector3::new(0.0, 0.0, -1.0), Color::white() * 0.8));
 
     scene.add(Sphere {
         center: Vector3::new(11.0, 3.0, 0.0),
@@ -62,15 +63,22 @@ fn main() {
 
     let mut img = image::ImageBuffer::new(IMAGE_WIDTH, IMAGE_HEIGHT);
     for (x, y, color) in pixels {
+        use palette::rgb::Rgb;
+        use palette::Alpha;
+        use palette::encoding::pixel::Pixel;
+        let rgb_linear = Rgb::new(color.r, color.g, color.b);
+        let srgba = Alpha {
+            color: Srgb::from_linear(rgb_linear),
+            alpha: 1.0
+        };
+        let pixel: [u8; 4] = srgba
+            .into_format()
+            .into_raw();
+        
         img.put_pixel(
             x,
             y,
-            image::Rgba([
-                (color.r * 255.0) as u8,
-                (color.g * 255.0) as u8,
-                (color.b * 255.0) as u8,
-                255,
-            ]),
+            image::Rgba(pixel),
         )
     }
     img.save("out.png").expect("Could not save image");
@@ -79,31 +87,23 @@ fn main() {
 
 fn calculate_color(scene: &Scene, mut ray: Ray, max_bounces: usize) -> Color {
     let mut exclude = None;
-    let mut color: Option<Color> = None;
+    let mut color = scene.background_color;
     for i in 0..max_bounces {
         let hit = scene.calculate_hit(&ray, &exclude);
         if let Some(hit) = hit {
             exclude = Some(hit.object);
 
-            let mut object_color = hit.object.color();
-            for (direction, color) in &scene.directional_lights {
+            let object_color = hit.object.color();
+            for &(direction, lamp_color) in &scene.directional_lights {
                 let shade = direction.dot(hit.normal);
                 if shade > 0.0 {
-                    object_color.add_directional(*color, shade);
+                    color.add(object_color * lamp_color, shade);
                 }
             }
 
-            for ambient in &scene.ambient_lights {
-                object_color.add_ambient(*ambient);
+            for &ambient in &scene.ambient_lights {
+                color.add(object_color * ambient, 1.0);
             }
-
-            color = Some(match color {
-                Some(mut color) => {
-                    color.change_towards(object_color, 0.1 / i as f32);
-                    color
-                }
-                None => object_color,
-            });
 
             ray = Ray {
                 start: hit.position,
@@ -114,5 +114,5 @@ fn calculate_color(scene: &Scene, mut ray: Ray, max_bounces: usize) -> Color {
         }
     }
 
-    color.unwrap_or(scene.background_color)
+    color
 }
